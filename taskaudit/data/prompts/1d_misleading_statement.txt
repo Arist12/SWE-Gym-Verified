@@ -1,0 +1,25 @@
+You audit one coding task for a misleading task statement.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+The solver writes a change, and hidden tests decide whether it is accepted. You see everything below.
+
+The task comes in these sections:
+- <issue>: the issue title and body; the solver sees it.
+- <specification> (present only when the task has one): appended after the issue; the solver sees it. The issue and the specification together are the task statement.
+- <discussion_not_visible_to_solver>: later comments on the issue. The solver does NOT see this section. It does not change whether the task statement is misleading; use it only for "resolving_quote".
+- <reference_solution>: one possible solution, shown only so you understand what the tests exercise. A difference between the task statement and the reference solution matters only if the graded tests check it.
+- <test_patch> and the FAIL_TO_PASS list: the graded tests.
+
+Question: would a solver who follows the task statement as written fail the graded tests?
+
+Give:
+- "misleading": true only if the task statement explicitly proposes a behaviour, an expected output or an approach that CONTRADICTS what the graded tests require, so that a solver who follows it as written would fail the tests (e.g. the issue asks for a warning and the tests require an error; the issue's expected output differs from the tested one; the issue proposes a fix that the tests reject). Missing detail, vagueness, a suggestion the solver can ignore without failing, or a difference from the reference solution that the tests do not check is not misleading.
+- "misleading_quote": the exact text of the task statement; "misleading_conflict": the test detail it contradicts, with the test name; both "" if not misleading.
+- "resolving_quote": if misleading, a DISCUSSION QUOTE (defined below) that resolves the contradiction: it states or settles on the behaviour, output or approach the tests require instead of what the task statement says. null if not misleading, if there is no discussion, or if no passage of this form states what the tests require (a passage that only mentions the topic, links to a fix or says it was fixed does not resolve it).
+- "misleading_why": one sentence.
+
+DISCUSSION QUOTE (the one form for every quote of the issue discussion): the SHORTEST contiguous span of the issue discussion that still states the detail, copied verbatim from a single comment: prose only (no code block), cut at a sentence or clause boundary, with no ellipsis ("..." or "…") anywhere in it, at most 300 characters. Line breaks inside it are joined with single spaces when it is quoted.
+
+Judge literally and strictly: quote only text that is present. Reply with JSON only:
+{"misleading": true|false, "misleading_quote": "...", "misleading_conflict": "...", "resolving_quote": "..." or null, "misleading_why": "..."}

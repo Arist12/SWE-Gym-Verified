@@ -1,0 +1,180 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "task",
+  "steps_used",
+  "decision",
+  "row_routes",
+  "hard_rule",
+  "templates",
+  "basis",
+  "code_evidence",
+  "relax"
+ ],
+ "properties": {
+  "task": {
+   "type": "string"
+  },
+  "steps_used": {
+   "type": "integer"
+  },
+  "decision": {
+   "type": "string",
+   "enum": [
+    "repair",
+    "delete"
+   ]
+  },
+  "row_routes": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "row",
+     "route"
+    ],
+    "properties": {
+     "row": {
+      "type": "string"
+     },
+     "route": {
+      "type": "string",
+      "enum": [
+       "S-a",
+       "S-lit",
+       "S-keep",
+       "S-scope",
+       "IS",
+       "T-b",
+       "P2P-relax"
+      ]
+     }
+    }
+   }
+  },
+  "hard_rule": {
+   "type": "string",
+   "enum": [
+    "none",
+    "H2",
+    "H3",
+    "H5",
+    "H6",
+    "H7",
+    "RESTRICTION",
+    "IS_UNAVAILABLE"
+   ]
+  },
+  "templates": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "basis": {
+   "type": "string"
+  },
+  "code_evidence": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "relax": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "description",
+      "sites",
+      "verified_file",
+      "probe_file",
+      "probe_ids_prefix",
+      "negatives",
+      "positives",
+      "accept_and_ignore_na"
+     ],
+     "properties": {
+      "description": {
+       "type": "string"
+      },
+      "sites": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "verified_file": {
+       "type": "string"
+      },
+      "probe_file": {
+       "type": "string"
+      },
+      "probe_ids_prefix": {
+       "type": "string"
+      },
+      "negatives": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "key",
+         "why",
+         "file",
+         "accept_and_ignore"
+        ],
+        "properties": {
+         "key": {
+          "type": "string"
+         },
+         "why": {
+          "type": "string"
+         },
+         "file": {
+          "type": "string"
+         },
+         "accept_and_ignore": {
+          "type": "boolean"
+         }
+        }
+       }
+      },
+      "positives": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "key",
+         "why",
+         "file"
+        ],
+        "properties": {
+         "key": {
+          "type": "string"
+         },
+         "why": {
+          "type": "string"
+         },
+         "file": {
+          "type": "string"
+         }
+        }
+       }
+      },
+      "accept_and_ignore_na": {
+       "type": "string"
+      }
+     }
+    }
+   ]
+  }
+ }
+}

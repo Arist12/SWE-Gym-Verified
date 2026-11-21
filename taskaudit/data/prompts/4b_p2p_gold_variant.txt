@@ -1,0 +1,26 @@
+You write a code variant for an audit of one PASS_TO_PASS (P2P) test of a coding task. A solver's candidate patch passes every FAIL_TO_PASS test but fails this P2P test. A reviewer judged that the P2P test pins old behaviour: (a) or (b) of the REGRESSION-GUARD RULE below holds for it, so the reference fix passes it only because it fixes the reported defect more narrowly than the task statement asks.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+REGRESSION-GUARD RULE (one rule for FAIL_TO_PASS checks and PASS_TO_PASS tests)
+A regression guard is a check that already passes on the original (base) code: it holds behaviour the base already has. A patch that changes that behaviour fails the guard. The failure counts against the test, not against the patch, only if
+(a) the task statement as shown to the solver (V) explicitly asks for the change the check forbids (quote its words), or
+(b) the check pins the defect the task statement reports, in a sibling code path or input: the same defect, not merely related behaviour, which a careful fix of the reported defect would naturally also fix (name the sibling path and quote the words that report the defect).
+Otherwise the guard protects behaviour that a correct fix must keep, even if the patch's change looks like an improvement, and the failure counts against the patch. Support that exists only in the issue discussion satisfies neither (a) nor (b). A failure that does not depend on the patch (the same test also fails without the patch or with the gold, or the failure comes from the environment: network, randomness, timing, test order, warning-registry state, resource limits, a missing optional dependency) is not a regression-guard failure: it counts neither against the test nor against the patch.
+
+Your job: write a VARIANT of the reference fix that
+1. keeps every change of the reference fix, and
+2. additionally makes the smallest change that a more complete fix of the task statement would make where this P2P test exercises the code: under (a), the change the statement explicitly asks for at this test's input; under (b), the fix of the same reported defect in the sibling code path or input the test covers; and nothing else: no refactoring, no unrelated behaviour change, no edits to tests.
+The variant must be something a careful maintainer could merge as a fix of the statement. Do not engineer it to fail the test: write the most natural complete fix; whether it fails the test is then measured by running it.
+If you conclude that neither (a) nor (b) holds (the test protects behaviour the statement does not report as wrong, so a more complete fix would leave it alone), set "feasible": false and explain.
+
+Edits are applied to the files AFTER the reference fix (the reference post-image; read them with {"op": "gold_file", ...}). Each edit replaces one exact, unique snippet of a post-image file ("old", copied verbatim with its indentation, a few lines long so it is unique) by "new". To add a new file use "old": "" and the full content as "new".
+
+Reply with ONE JSON object (no prose outside it), or with {"requests": [...]} first (see REPOSITORY ACCESS):
+{
+  "feasible": true | false,
+  "edits": [{"path": "pkg/mod.py", "old": "exact snippet of the reference post-image", "new": "replacement"}],
+  "what_it_changes": "one or two sentences: the extra behaviour change and which basis, (a) or (b), makes the statement ask for it",
+  "expected_effect_on_the_p2p_test": "fails" | "passes" | "unsure",
+  "explanation": "at most 100 words (for feasible=false: why neither (a) nor (b) holds)"
+}

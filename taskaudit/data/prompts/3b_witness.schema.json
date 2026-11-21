@@ -1,0 +1,290 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "task",
+  "steps_used",
+  "assertions",
+  "claim",
+  "fn_with_code",
+  "fn_rationale",
+  "witness",
+  "strongest_alternative",
+  "too_weak"
+ ],
+ "properties": {
+  "task": {
+   "type": "string"
+  },
+  "steps_used": {
+   "type": "integer"
+  },
+  "assertions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "tests",
+     "assertion",
+     "kind",
+     "status",
+     "evidence",
+     "rejected_alternative",
+     "passes_at_base",
+     "specified_in_discussion",
+     "discussion_quote"
+    ],
+    "properties": {
+     "id": {
+      "type": "string"
+     },
+     "tests": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "assertion": {
+      "type": "string"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "stated_in_issue",
+       "derivable_from_codebase",
+       "standard_convention",
+       "guess_interface",
+       "guess_literal",
+       "guess_behaviour_choice",
+       "beyond_issue"
+      ]
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "DETERMINED",
+       "UNDERDETERMINED"
+      ]
+     },
+     "evidence": {
+      "type": "string"
+     },
+     "rejected_alternative": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "passes_at_base": {
+      "type": "string",
+      "enum": [
+       "yes",
+       "no"
+      ]
+     },
+     "specified_in_discussion": {
+      "anyOf": [
+       {
+        "type": "null"
+       },
+       {
+        "type": "string",
+        "enum": [
+         "yes",
+         "no"
+        ]
+       }
+      ]
+     },
+     "discussion_quote": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    }
+   }
+  },
+  "claim": {
+   "type": "string",
+   "enum": [
+    "FN",
+    "NOT_FN"
+   ]
+  },
+  "fn_with_code": {
+   "type": "integer",
+   "enum": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  "fn_rationale": {
+   "type": "string"
+  },
+  "witness": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "summary",
+      "targets",
+      "departure_from_gold",
+      "resolves_issue_evidence",
+      "acceptability",
+      "self_run_f2p_failed",
+      "self_run_p2p_failed",
+      "failed_test",
+      "failed_check",
+      "check_passes_at_base",
+      "guard_basis",
+      "issue_asks_for_change"
+     ],
+     "properties": {
+      "summary": {
+       "type": "string"
+      },
+      "targets": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "departure_from_gold": {
+       "type": "string"
+      },
+      "resolves_issue_evidence": {
+       "type": "string"
+      },
+      "acceptability": {
+       "type": "string"
+      },
+      "self_run_f2p_failed": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "self_run_p2p_failed": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "failed_test": {
+       "type": "string"
+      },
+      "failed_check": {
+       "type": "string"
+      },
+      "check_passes_at_base": {
+       "type": "string",
+       "enum": [
+        "yes",
+        "no",
+        "unchecked"
+       ]
+      },
+      "guard_basis": {
+       "type": "string",
+       "enum": [
+        "issue_asks",
+        "sibling_defect",
+        "none",
+        "na"
+       ]
+      },
+      "issue_asks_for_change": {
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "strongest_alternative": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "exists",
+      "summary",
+      "targets",
+      "departure_from_gold",
+      "resolves_issue_evidence",
+      "self_run_f2p_failed",
+      "self_run_p2p_failed",
+      "why_not_fn",
+      "evidence",
+      "no_alternative_reason"
+     ],
+     "properties": {
+      "exists": {
+       "type": "boolean"
+      },
+      "summary": {
+       "type": "string"
+      },
+      "targets": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "departure_from_gold": {
+       "type": "string"
+      },
+      "resolves_issue_evidence": {
+       "type": "string"
+      },
+      "self_run_f2p_failed": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "self_run_p2p_failed": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "why_not_fn": {
+       "type": "string",
+       "enum": [
+        "passes_all_f2p",
+        "does_not_resolve",
+        "not_acceptable",
+        "regression_guard_only",
+        "none_exists"
+       ]
+      },
+      "evidence": {
+       "type": "string"
+      },
+      "no_alternative_reason": {
+       "type": "string"
+      }
+     }
+    }
+   ]
+  },
+  "too_weak": {
+   "type": [
+    "string",
+    "null"
+   ]
+  }
+ }
+}

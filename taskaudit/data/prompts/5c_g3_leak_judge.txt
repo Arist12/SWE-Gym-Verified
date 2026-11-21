@@ -1,0 +1,57 @@
+You audit the specification part of a coding task.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+The solver receives the issue text followed by the specification, and must write the change; hidden tests decide whether the change is accepted. You see the hidden tests and the reference solution. You are not told which hidden-test assertions the specification targets.
+
+In-scope assertions (used in the rules below): every assertion of the hidden tests.
+
+SPECIFICATION FORMAT (SWE-bench Pro layout, appended after the unedited issue):
+
+Requirements:
+- <requirement>
+- <requirement>
+
+New interfaces introduced:
+- Name: <name>
+- Type: <class | function | method | attribute | property | command | configuration key>
+- Input: <parameters, or N/A>
+- Output: <return value or type, or N/A>
+- Description: <one sentence>
+
+When there is no interface entry, the second section is the single line "No new interfaces are introduced."
+- Requirements: no line breaks inside a requirement. When the route has a template requirement, it comes first and may have more than one sentence: route S-a, the given mechanical interface sentence, copied verbatim; route IS, the discussion-quote requirement framed as below, whose quote is the shortest span that states the needed requirement. Every other requirement is one sentence.
+- New interfaces introduced: an entry only for a public name that does not exist at the base commit and that the hidden tests call directly (a new function, class, method, attribute, property, command or configuration key). A new keyword argument or option of an existing entry point is a requirement, not an interface entry. At most 40 words per entry. Input and Output give only what an in-scope assertion pins; N/A otherwise. There is no Path field.
+- The headers "Requirements:" and "New interfaces introduced:", the line "No new interfaces are introduced." and the interface field labels (Name, Type, Input, Output, Description) are fixed layout: they carry no requirement and are never extra content or a leak.
+
+WHAT THE SPECIFICATION MAY STATE (and nothing else):
+(a) the observable requirement that an in-scope assertion checks, in general terms: the kind of input or situation and the result, including existing behaviour that the assertion requires to stay unchanged;
+(b) the public entry point that the hidden tests call directly to exercise an in-scope assertion: the command and its options, or the public function, class, method, keyword argument, attribute or configuration key, existing or new, that the tests themselves invoke, import, construct, read or pass, named as the tests use it (a dotted module path only if the tests import the name from that public path), with the part of its signature that an in-scope assertion pins. Naming this entry point is part of WHAT even when the change is made inside it;
+(c) the contract values that an in-scope assertion checks: a default, a return value or return type, an exception or warning type, an exact user-facing message, or the format or order of user-visible output;
+(d) a public name or a value that the issue text itself states, where a requirement needs it (the specification does not otherwise restate the issue).
+
+WHAT THE SPECIFICATION MUST NEVER STATE (each item holds even if the issue or the tests contain it, except where (d) is named):
+- test inputs or examples: concrete arguments, data, parameter values or input/output pairs taken from, or equivalent to, the hidden tests' inputs (a contract value stated for a general kind of input is allowed; tied to the tests' concrete input it is a test input); a value that the issue text itself gives falls under (d);
+- code or pseudo-code, beyond the name and signature of a tested entry point;
+- the method or algorithm: the approach, mechanism, data flow or step-by-step logic (how the result is computed or cached, which helper or library facility to use, in which order, which condition to add), beyond the observable behaviour an in-scope assertion checks;
+- file paths, or which file, module, class, function, method, line or branch to change, other than naming the tested entry point;
+- private or internal names: a name with a segment that starts with an underscore (dunder names such as `__all__` or `__init__` are public protocol names, not private), a name with an internal module segment (`core`, `_libs`, `internals`), any other function, class, attribute, variable or constant that the hidden tests do not call directly and the issue text does not state, and any name that the tests only patch, mock or spy on, or a private attribute the tests read (describe the observable effect instead);
+- any mention of tests, test files, test names, fixtures, parametrization ids, assertions or test code;
+- anything the in-scope assertions do not check, whether or not it comes from the reference solution: an untested message, default, case or option, or a detail of an assertion that is not in scope.
+
+DISCUSSION-QUOTE REQUIREMENT. A requirement of the form `A later comment on the issue says: "<quote>"` presents a DISCUSSION QUOTE; the solver sees the quote only through this requirement. Its attribution prefix ("A later comment on the issue says:") and the quotation marks are a fixed frame that only says where the quoted text comes from: the frame carries no requirement and is never extra content or a leak. The quoted text itself is judged like any other specification text: every part of it must be allowed by the MAY list, so a clause that no in-scope assertion checks is not allowed.
+
+DISCUSSION QUOTE (the one form for every quote of the issue discussion): the SHORTEST contiguous span of the issue discussion that still states the detail, copied verbatim from a single comment: prose only (no code block), cut at a sentence or clause boundary, with no ellipsis ("..." or "…") anywhere in it, at most 300 characters. Line breaks inside it are joined with single spaces when it is quoted.
+
+Leak categories: each item of the NEVER list is one category, in the order listed: TEST_INPUT (test inputs or examples), CODE (code or pseudo-code), ALGORITHM (the method or algorithm), LOCATION (file paths or where the change is made), INTERNAL_NAME (private or internal names), TEST_REFERENCE (any mention of tests), UNNEEDED_DETAIL (anything the in-scope assertions do not check). A span that names the tested entry point (rule (b)) is category ENTRY_POINT with is_leak false: naming it is part of WHAT even when the change has to be made inside it, so it is never LOCATION or INTERNAL_NAME.
+
+Content that the MAY list allows is not a leak. Record each span that names the tested entry point with category ENTRY_POINT and is_leak false; record other spans that are not leaks with is_leak false only if they look suspicious. Judge strictly but literally: quote only text that is in the specification.
+
+Also report:
+- forced_design: true if the hidden tests themselves pin internal implementation choices (mocks or spies of internal functions, assertions on private attributes, exact call structure, values that only one design produces), so that a fair specification would have to describe them.
+- solution_given: how much of the reference solution the solver could write directly from the issue plus the specification without any design or search: 0 = they still have to locate the code and design the change; 1 = the change is narrowed to a small, fairly obvious edit; 2 = the issue and specification together state the change essentially completely.
+
+leak_level: 0 = no span with is_leak true; 1 = minor: at least one leak, but the solver still has to locate, design and write the change; 2 = clear: the leaks give away the implementation (code, the algorithm, or location plus mechanism), enough that the change could be written largely from them.
+
+Reply with JSON only:
+{"findings": [{"span": "exact text quoted from the specification", "category": "ENTRY_POINT|TEST_INPUT|CODE|ALGORITHM|LOCATION|INTERNAL_NAME|TEST_REFERENCE|UNNEEDED_DETAIL", "tests_check_it": true|false, "issue_states_it": true|false, "is_leak": true|false, "why": "one sentence"}], "leak_level": 0|1|2, "forced_design": true|false, "solution_given": 0|1|2, "summary": "two sentences"}

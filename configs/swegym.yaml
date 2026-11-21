@@ -1,0 +1,36 @@
+# The paper's setting: SWE-Gym tasks from the public dataset, the SWE-Gym fork of the SWE-bench harness
+# (uv sync --extra swegym), the paper's models (Claude Opus 5.5, GPT-6.1 Sol, and GPT-5.6 Sol as the second leak judge)
+# at reasoning effort high. ${VAR} and ${VAR:-default} read the environment; API keys are never written here (each
+# model entry names the variable that holds its key).
+work_dir: ${TASKAUDIT_WORK:-./work}
+workers: 4
+
+dataset:
+  adapter: swegym                  # hf_name SWE-Gym/SWE-Gym, images xingyaoww/sweb.eval.x86_64.<id>
+  image_registry: ${TASKAUDIT_IMAGE_REGISTRY:-}   # e.g. a pull-through mirror prefix "mirror.gcr.io/"
+  human_labels: ${TASKAUDIT_HUMAN_LABELS:-}       # PAIChecker's human labels (CSV: instance_id, human_label)
+  pai_records: ${TASKAUDIT_PAI_RECORDS:-}         # PAIChecker evidence records for unlabelled tasks (JSONL)
+
+harness:
+  backend: swegym_fork
+  timeout_s: 2400
+  network: none
+
+llm:
+  dry_run: true                    # set false (and export the keys) to make calls
+  families:
+    # extra_body: the reasoning settings of the paper's runs (adaptive thinking, effort high)
+    claude: {provider: anthropic, model: claude-opus-5-5, api_key_env: ANTHROPIC_API_KEY,
+             base_url: "${ANTHROPIC_BASE_URL:-https://api.anthropic.com}",
+             extra_body: {thinking: {type: adaptive}, output_config: {effort: high}}}
+    gpt: {provider: openai, model: gpt-6.1-sol, api_key_env: OPENAI_API_KEY, single_turn: true,
+          base_url: "${OPENAI_BASE_URL:-https://api.openai.com/v1}", extra_body: {reasoning_effort: high}}
+  roles:
+    leak_judge_b: {provider: openai, model: gpt-5.6-sol, api_key_env: OPENAI_API_KEY,
+                   base_url: "${OPENAI_BASE_URL:-https://api.openai.com/v1}", extra_body: {reasoning_effort: high}}
+
+stages:
+  repair: {blind_solve: false}     # as at the end of the paper's runs (the blind solve ran on 122 repairs, then it was switched off)
+  measure:
+    enabled: false                 # 8 samples of a policy model per task; see docs/WORKFLOW.md "Difficulty"
+    samples: 8

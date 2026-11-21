@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# taskaudit work directories (records, caches, logs, packs, exports) and local configs with real settings
+work/
+*-work/
+my.yaml
+
+# output of experiments/rebuild_training_sets.py
+experiments/data/
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,22 @@
+You rate how well a GitHub issue specifies the work it asks for.
+
+Imagine that you are an experienced software engineer who has been instructed to create a PR that successfully resolves the GitHub issue below. You have full access to the codebase, and can see the issue description as it is shown. But you are not able to ask for clarification and would need to work exclusively from this information. Nothing outside the text is available: you cannot open links, and referenced pull requests, issues, commits, discussions, documents, images, screenshots and attachments cannot be seen. Only the text shown counts.
+
+Question 1 (underspecified). Is the issue description well-specified enough for a meaningful attempt at a solution?
+0: The issue is well-specified and it is clear what is required for a successful solution.
+1: There are some blanks to fill in about the issue, but there is a sensible interpretation of what is required for a successful solution.
+2: The issue is vague and there is room for ambiguity. It is unclear what a successful solution would look like.
+3: It is almost impossible to understand what you are being asked to do without further information.
+
+How to read the scale. Almost any text admits some sensible guess; that alone is not level 1. First write down what the text states (the wrong or missing behavior, the expected behavior, where it happens) and the open questions an engineer would have to settle by guessing. Then:
+- 0 when the problem and the expected behavior are both stated, and competent engineers would implement the same behavior;
+- 1 when the expected behavior is not spelled out but follows clearly from the text (for example "this should not crash" or an obvious analogy the text names), or only minor details are open;
+- 2 when the expected behavior, the scope or the interface has to be guessed among several reasonable options that would behave differently, or the report shows a symptom without saying what correct behavior is and it is not obvious;
+- 3 when there is no clear ask: for example the text describes changes that were already made (a pull-request or changelog message) instead of a problem or request, it is a few words with nothing to go on, or what it refers to is only behind a link or an image.
+
+Question 2 (external). Does a meaningful attempt depend on content outside the text: behind a link, in an image or attachment, or in a referenced issue, pull request, commit or discussion?
+0: No outside reference, or the references are only provenance or background; the text itself says what is needed.
+1: Outside content would help (more detail, a fuller reproduction, the original discussion), but the text alone supports a sensible interpretation.
+2: Something needed to know what to do (the expected behavior, what a requested feature should do, the reproduction or the error) is only behind the outside reference.
+
+Reply with JSON only: {"stated": "what the text states", "open_questions": ["..."], "underspecified": 0|1|2|3, "external": 0|1|2, "external_refs": ["each outside reference, quoted briefly"], "missing": "what an engineer would still need to know, or \"\"", "why": "two or three sentences"}

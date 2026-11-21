@@ -1,0 +1,85 @@
+G1, the mechanical check: a deterministic check of the specification that a statement repair appends. G1 enforces the
+token and form part of the shared rules below, word for word the same rules that the repair writer (step 5a), the
+traceability judges (G2, step 5b) and the leak judges (G3, step 5c) receive; G2 (traceability, extra content) and G3
+(leak audit) judge the rest. In-scope assertions = the ROUTED assertions.
+
+SPECIFICATION FORMAT (SWE-bench Pro layout, appended after the unedited issue):
+
+Requirements:
+- <requirement>
+- <requirement>
+
+New interfaces introduced:
+- Name: <name>
+- Type: <class | function | method | attribute | property | command | configuration key>
+- Input: <parameters, or N/A>
+- Output: <return value or type, or N/A>
+- Description: <one sentence>
+
+When there is no interface entry, the second section is the single line "No new interfaces are introduced."
+- Requirements: no line breaks inside a requirement. When the route has a template requirement, it comes first and may have more than one sentence: route S-a, the given mechanical interface sentence, copied verbatim; route IS, the discussion-quote requirement framed as below, whose quote is the shortest span that states the needed requirement. Every other requirement is one sentence.
+- New interfaces introduced: an entry only for a public name that does not exist at the base commit and that the hidden tests call directly (a new function, class, method, attribute, property, command or configuration key). A new keyword argument or option of an existing entry point is a requirement, not an interface entry. At most 40 words per entry. Input and Output give only what an in-scope assertion pins; N/A otherwise. There is no Path field.
+- The headers "Requirements:" and "New interfaces introduced:", the line "No new interfaces are introduced." and the interface field labels (Name, Type, Input, Output, Description) are fixed layout: they carry no requirement and are never extra content or a leak.
+
+DISCUSSION-QUOTE REQUIREMENT. A requirement of the form `A later comment on the issue says: "<quote>"` presents a DISCUSSION QUOTE; the solver sees the quote only through this requirement. Its attribution prefix ("A later comment on the issue says:") and the quotation marks are a fixed frame that only says where the quoted text comes from: the frame carries no requirement and is never extra content or a leak. The quoted text itself is judged like any other specification text: every part of it must be allowed by the MAY list, so a clause that no in-scope assertion checks is not allowed.
+
+DISCUSSION QUOTE (the one form for every quote of the issue discussion): the SHORTEST contiguous span of the issue discussion that still states the detail, copied verbatim from a single comment: prose only (no code block), cut at a sentence or clause boundary, with no ellipsis ("..." or "…") anywhere in it, at most 300 characters. Line breaks inside it are joined with single spaces when it is quoted.
+
+WHAT THE SPECIFICATION MAY STATE (and nothing else):
+(a) the observable requirement that an in-scope assertion checks, in general terms: the kind of input or situation and the result, including existing behaviour that the assertion requires to stay unchanged;
+(b) the public entry point that the hidden tests call directly to exercise an in-scope assertion: the command and its options, or the public function, class, method, keyword argument, attribute or configuration key, existing or new, that the tests themselves invoke, import, construct, read or pass, named as the tests use it (a dotted module path only if the tests import the name from that public path), with the part of its signature that an in-scope assertion pins. Naming this entry point is part of WHAT even when the change is made inside it;
+(c) the contract values that an in-scope assertion checks: a default, a return value or return type, an exception or warning type, an exact user-facing message, or the format or order of user-visible output;
+(d) a public name or a value that the issue text itself states, where a requirement needs it (the specification does not otherwise restate the issue).
+
+WHAT THE SPECIFICATION MUST NEVER STATE (each item holds even if the issue or the tests contain it, except where (d) is named):
+- test inputs or examples: concrete arguments, data, parameter values or input/output pairs taken from, or equivalent to, the hidden tests' inputs (a contract value stated for a general kind of input is allowed; tied to the tests' concrete input it is a test input); a value that the issue text itself gives falls under (d);
+- code or pseudo-code, beyond the name and signature of a tested entry point;
+- the method or algorithm: the approach, mechanism, data flow or step-by-step logic (how the result is computed or cached, which helper or library facility to use, in which order, which condition to add), beyond the observable behaviour an in-scope assertion checks;
+- file paths, or which file, module, class, function, method, line or branch to change, other than naming the tested entry point;
+- private or internal names: a name with a segment that starts with an underscore (dunder names such as `__all__` or `__init__` are public protocol names, not private), a name with an internal module segment (`core`, `_libs`, `internals`), any other function, class, attribute, variable or constant that the hidden tests do not call directly and the issue text does not state, and any name that the tests only patch, mock or spy on, or a private attribute the tests read (describe the observable effect instead);
+- any mention of tests, test files, test names, fixtures, parametrization ids, assertions or test code;
+- anything the in-scope assertions do not check, whether or not it comes from the reference solution: an untested message, default, case or option, or a detail of an assertion that is not in scope.
+
+Inputs per case: the original issue text; the route (S-a, S-lit, S-keep, S-scope, IS); the template requirement, if the
+route has one (S-a: the given mechanical interface sentence; IS: the writer's first requirement, whose quote
+`is_quote_of` extracts and `is_template` rebuilds); the ROUTED assertions' rows of the canonical assertion list
+(fields api, code, literal; A-ids for FAIL_TO_PASS checks, P-ids for a routed PASS_TO_PASS check); the F2P test
+sources and a routed PASS_TO_PASS test's source (only to find names the tests define themselves); hints_text and both
+families' quotes for the item (only for the IS quote check); the gold patch and the bare clone at the base commit (only
+to label unprovenanced identifiers as base_present / gold_only / absent_everywhere).
+
+Checked texts: every requirement (a discussion-quote requirement is checked on the quoted text), and every interface
+field (Name checked as an identifier; Input, Output, Description; N/A skipped; Type checked by the form rule).
+
+A text passes iff it passes every rule of the TOKEN RULES below; the repair writer receives the same block.
+
+TOKEN RULES (G1, deterministic; checked on every requirement, on the quoted text of a discussion-quote requirement, and on every interface field except Type). A text passes only if ALL hold:
+1. Identifiers (backticked spans and code-shaped prose words: dotted, snake_case, camelCase, call syntax, --flag) have provenance: they appear, spelled the same way, in the issue, or in a routed assertion's entry point or checked expression (its `api` entries with their keyword names and dotted suffixes, its `code` line, an identifier-shaped pinned `literal`). Names that the hidden test code defines itself (def/class names, function parameters, assignment targets, loop/with targets: fixtures, locals, test helpers) have no provenance from the tests unless the issue or an `api` entry also has them.
+2. Literals (quoted strings and numbers, also inside code spans) have provenance: they appear in the issue (a number as a standalone number token), or are a contract value that a routed assertion checks (a string inside a pinned `literal`, including a message, format or order string; a number equal to a number in a pinned `literal`). A value that occurs only as an argument or data in the test code has no provenance.
+3. A code span (backticked text) appears verbatim in the issue or in a routed assertion's `api` / `code` text, and its identifiers and literals pass 1 and 2 one by one (so `seed=123` fails when 123 is a test input).
+4. No identifier has a private segment (a segment that starts with "_" and is not a dunder: `__all__` and `__init__` are public) or an internal segment (core, _libs, internals), even if the issue or the tests have it.
+5. No path-like token (a file name with a source or config extension, an a/b/c path, a URL, a "Path:" line), even if the issue has it.
+6. No instruction phrasing: no sentence, list item, or text after a colon or semicolon that starts with a code-change verb (add, modify, update, replace, change, implement, fix, remove, rename, use, call, create, define, ensure, make sure, ...); no code-change verb after a modal or a person (should, must, need(s) to, has/have to, will, can, could, would, let's, we, you, I: "should add", "can change", "we remove"); no "should/must/needs to be added/changed/... to/in/from ..."; no "replace ... with `...`". A verb in a declarative description of the result is allowed ("the value no longer changes", "`X` returns `Y`").
+7. No test words: test, tests, tested, testing, pytest, unittest, assert*, fixture(s), parametrize, xfail, doctest, conftest, test_x, TestX, F2P, P2P, FAIL_TO_PASS, PASS_TO_PASS.
+
+Rules and SPEC_CONTENT: 1 = MAY (b) and (d), NEVER private or internal names; 2 = MAY (c) and (d), NEVER test inputs or
+examples; 3 = NEVER code; 4 = NEVER private or internal names; 5 = NEVER file paths; 6 = WHAT, not HOW; 7 = NEVER any
+mention of tests.
+
+Form (the whole specification; SPECIFICATION FORMAT above):
+- "Requirements:": at least 1 requirement, no line break inside a
+  requirement. When the route has a template requirement, it is first and may have more than one sentence (S-a:
+  verbatim as given); every other requirement is one sentence. Routes S-lit, S-keep and S-scope have no template.
+- Route IS: the first requirement is `A later comment on the issue says: "<quote>"` (`is_quote_of`) with <quote>
+  the writer's span, checked by `quote_check(quote, hints_text, candidates)`: a contiguous span of one family's
+  quote, verbatim in hints_text after whitespace normalisation (line breaks joined with single spaces), cut at word
+  boundaries, at most 300 characters, no code fence, no ellipsis. At least 2 requirements (the bare quote is not a
+  route). Whether the span is the shortest one and ends at a sentence or clause boundary is not mechanical: G2 judges
+  every clause of the quoted text as extra content when no routed assertion checks it.
+- "New interfaces introduced:": any number of entries with exactly the fields Name,
+  Type, Input, Output, Description (no Path), Type in {class, function, method, attribute, property, command,
+  configuration key}, Description one sentence, at most 40 words per entry, no line breaks; the line "No new
+  interfaces are introduced." when there is none.
+
+G1 passes iff every checked text passes and the form check passes. G1 cannot judge whether a requirement is tested,
+or whether prose describes a method: G2 (traceability, extra content) and G3 (leak audit) judge those.

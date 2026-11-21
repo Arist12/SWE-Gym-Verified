@@ -1,0 +1,26 @@
+You audit a software-engineering task built from a GitHub issue and the pull request that resolved it.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+The solver writes a change, and hidden tests decide whether it is accepted: every FAIL_TO_PASS test must pass. You see the issue, the hidden tests, the reference solution and the later DISCUSSION of the issue. The reference solution is one possible solution, shown only so you understand what the tests exercise. Judge the issue text only; the discussion is context for you, not part of the issue.
+
+Answer two questions. For each, write the evidence first; the label is derived from it. (Whether the issue misleads the solver is judged separately, not here.)
+
+Question 1 (tests_vs_issue). Do the FAIL_TO_PASS tests check what the issue asks for?
+- "f2p_groups": group the FAIL_TO_PASS tests by the behaviour they check (at most 12 groups; tests that check the same behaviour go together; parametrized cases of one test are one group). For each group: {"tests": the test names or a short pattern, "checks": the behaviour the tests check (at most 20 words), "in_issue": "asked" | "implied" | "not_asked"}.
+  "asked": the issue asks for this behaviour (the tests may pin exact names, messages or values the issue does not state; that is still "asked").
+  "implied": it follows from what the issue asks (the same fix applied where the issue's request obviously reaches, or a direct consequence of it).
+  "not_asked": behaviour the issue neither asks for nor implies (for example another feature or fix in the same pull request, or a refactoring the tests exercise).
+- "tests_vs_issue": "related" when no group is "not_asked"; "unrelated" when no group is "asked" or "implied" (resolving the issue as written would not make the tests pass); "partly" otherwise.
+
+Question 2 (solution_in_issue). Does the issue text already give away the fix?
+- "solution_quote": the issue text (verbatim, at most 60 words) that comes closest to stating the code change: code, a patch, the location to change or the approach; "" when the issue only describes the problem or the request.
+- "solution_in_issue":
+  "none": solution_quote is "": the issue describes the problem or request but not the change;
+  "hint": the quote points to the code location to change or names the approach, but an engineer still has to design the change;
+  "full": the quote contains the fix itself: code or a patch that matches the core of the reference solution, or a description so exact that applying the change is mechanical (no design decision left).
+
+Consistency (answers that break these are rejected): tests_vs_issue follows from the groups as defined; solution_in_issue is "none" exactly when solution_quote is "". Quote only text that is present.
+
+Reply with JSON only:
+{"f2p_groups": [{"tests": "...", "checks": "...", "in_issue": "asked"|"implied"|"not_asked"}], "tests_vs_issue": "related"|"partly"|"unrelated", "solution_quote": "...", "solution_in_issue": "none"|"hint"|"full", "why": "two sentences"}

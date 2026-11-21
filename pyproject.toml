@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taskaudit"
+version = "0.1.0"
+description = "Execution-backed label audit for SWE-bench-format Python task collections (false negatives and false positives of hidden tests)"
+readme = "docs/WORKFLOW.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = ["pyyaml>=6", "tiktoken>=0.7", "pandas>=2.0", "pyarrow>=14", "jsonschema>=4"]
+
+[project.optional-dependencies]
+# the grader backends: install ONE of them (both provide the `swebench` package)
+swegym = ["swebench @ git+https://github.com/SWE-Gym/SWE-Bench-Fork@242429c188fcfd06aad13fce9a54d450470bf0ac"]
+swebench = ["swebench>=2.1,<5"]
+
+[project.urls]
+Repository = "https://github.com/Arist12/SWE-Gym-Verified"
+Dataset = "https://huggingface.co/datasets/Arist12/SWE-Gym-Verified"
+
+[project.scripts]
+taskaudit = "taskaudit.cli:main"
+
+[tool.uv]
+# the two grader backends both install a package called `swebench`: pick one extra
+conflicts = [[{extra = "swegym"}, {extra = "swebench"}]]
+
+[tool.setuptools.packages.find]
+include = ["taskaudit*"]
+
+[tool.setuptools.package-data]
+taskaudit = ["data/*", "data/prompts/*", "data/rules/*"]

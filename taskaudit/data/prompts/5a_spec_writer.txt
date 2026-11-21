@@ -1,0 +1,66 @@
+You write a short specification that will be appended to a GitHub issue used as a coding task.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+Setting. The solver receives the issue text followed by your specification, and the repository at the base commit. Hidden tests decide whether their change is accepted. The issue text is never edited. The issue alone does not give a detail that the hidden tests pin (the ROUTED assertions below), so a correct solution may still fail. The specification closes exactly that gap and nothing else. You see the routed assertions and the hidden test code so that you know what is pinned; the solver never sees them, and it sees the discussion of the issue only where your specification quotes it. You do not see the discussion either, except, on route IS, the QUOTE CANDIDATES: the discussion passages that the auditors quoted for the routed assertions.
+
+In-scope assertions (used in the rules below): the ROUTED assertions given in the task (ids A1, A2, ... for FAIL_TO_PASS checks; P1, P2, ... for a routed PASS_TO_PASS check). In each routed assertion, "api under test" lists its `api` entries, the code after "location:" is its `code` line, and "pinned literal" is its `literal`.
+
+SPECIFICATION FORMAT (SWE-bench Pro layout, appended after the unedited issue):
+
+Requirements:
+- <requirement>
+- <requirement>
+
+New interfaces introduced:
+- Name: <name>
+- Type: <class | function | method | attribute | property | command | configuration key>
+- Input: <parameters, or N/A>
+- Output: <return value or type, or N/A>
+- Description: <one sentence>
+
+When there is no interface entry, the second section is the single line "No new interfaces are introduced."
+- Requirements: no line breaks inside a requirement. When the route has a template requirement, it comes first and may have more than one sentence: route S-a, the given mechanical interface sentence, copied verbatim; route IS, the discussion-quote requirement framed as below, whose quote is the shortest span that states the needed requirement. Every other requirement is one sentence.
+- New interfaces introduced: an entry only for a public name that does not exist at the base commit and that the hidden tests call directly (a new function, class, method, attribute, property, command or configuration key). A new keyword argument or option of an existing entry point is a requirement, not an interface entry. At most 40 words per entry. Input and Output give only what an in-scope assertion pins; N/A otherwise. There is no Path field.
+- The headers "Requirements:" and "New interfaces introduced:", the line "No new interfaces are introduced." and the interface field labels (Name, Type, Input, Output, Description) are fixed layout: they carry no requirement and are never extra content or a leak.
+
+DISCUSSION-QUOTE REQUIREMENT. A requirement of the form `A later comment on the issue says: "<quote>"` presents a DISCUSSION QUOTE; the solver sees the quote only through this requirement. Its attribution prefix ("A later comment on the issue says:") and the quotation marks are a fixed frame that only says where the quoted text comes from: the frame carries no requirement and is never extra content or a leak. The quoted text itself is judged like any other specification text: every part of it must be allowed by the MAY list, so a clause that no in-scope assertion checks is not allowed.
+
+DISCUSSION QUOTE (the one form for every quote of the issue discussion): the SHORTEST contiguous span of the issue discussion that still states the detail, copied verbatim from a single comment: prose only (no code block), cut at a sentence or clause boundary, with no ellipsis ("..." or "…") anywhere in it, at most 300 characters. Line breaks inside it are joined with single spaces when it is quoted.
+
+WHAT THE SPECIFICATION MAY STATE (and nothing else):
+(a) the observable requirement that an in-scope assertion checks, in general terms: the kind of input or situation and the result, including existing behaviour that the assertion requires to stay unchanged;
+(b) the public entry point that the hidden tests call directly to exercise an in-scope assertion: the command and its options, or the public function, class, method, keyword argument, attribute or configuration key, existing or new, that the tests themselves invoke, import, construct, read or pass, named as the tests use it (a dotted module path only if the tests import the name from that public path), with the part of its signature that an in-scope assertion pins. Naming this entry point is part of WHAT even when the change is made inside it;
+(c) the contract values that an in-scope assertion checks: a default, a return value or return type, an exception or warning type, an exact user-facing message, or the format or order of user-visible output;
+(d) a public name or a value that the issue text itself states, where a requirement needs it (the specification does not otherwise restate the issue).
+
+WHAT THE SPECIFICATION MUST NEVER STATE (each item holds even if the issue or the tests contain it, except where (d) is named):
+- test inputs or examples: concrete arguments, data, parameter values or input/output pairs taken from, or equivalent to, the hidden tests' inputs (a contract value stated for a general kind of input is allowed; tied to the tests' concrete input it is a test input); a value that the issue text itself gives falls under (d);
+- code or pseudo-code, beyond the name and signature of a tested entry point;
+- the method or algorithm: the approach, mechanism, data flow or step-by-step logic (how the result is computed or cached, which helper or library facility to use, in which order, which condition to add), beyond the observable behaviour an in-scope assertion checks;
+- file paths, or which file, module, class, function, method, line or branch to change, other than naming the tested entry point;
+- private or internal names: a name with a segment that starts with an underscore (dunder names such as `__all__` or `__init__` are public protocol names, not private), a name with an internal module segment (`core`, `_libs`, `internals`), any other function, class, attribute, variable or constant that the hidden tests do not call directly and the issue text does not state, and any name that the tests only patch, mock or spy on, or a private attribute the tests read (describe the observable effect instead);
+- any mention of tests, test files, test names, fixtures, parametrization ids, assertions or test code;
+- anything the in-scope assertions do not check, whether or not it comes from the reference solution: an untested message, default, case or option, or a detail of an assertion that is not in scope.
+
+Write plain declarative prose in the present tense that describes the result ("X accepts Y", "X returns Y", "X raises Y when ..."). No code-change instructions or modal code-change phrasing ("add", "modify", "implement", "should be changed", "needs to be updated", ...). Do not restate the issue.
+
+ROUTE (given in the task for each routed assertion) says what it needs. A task may combine several statement routes; then write one specification that covers every routed assertion, in the format above:
+- S-a: the public entry point the tests call directly (a new name, keyword argument, signature or exception class). The TEMPLATE REQUIREMENT names it; an added requirement may state the semantics of the same new parameter.
+- S-lit: a contract value that a routed assertion checks (rule (c)).
+- S-keep: existing behaviour that a routed assertion requires to stay unchanged.
+- S-scope: the natural extension of the issue's request on the same entry point that a routed assertion checks (another input form, operand order, sibling dtype or edge case), with the value it checks.
+- IS: the routed assertions pin a detail that the issue text contradicts and that the discussion settles. From the QUOTE CANDIDATES, select the SHORTEST contiguous span of one candidate, copied verbatim, that states the requirement the routed assertions need: cut it at a sentence or clause boundary, add no ellipsis and keep none, at most 300 characters, and leave out every clause that no routed assertion checks (the quoted text is judged like any other specification text, and the TOKEN RULES apply to it). Your discussion-quote requirement is `A later comment on the issue says: "<span>"`. A quote alone is not enough: add one or more requirements that state what the routed assertions pin (the behaviour and any contract value), even where the quote implies it.
+Route S-a: the TEMPLATE REQUIREMENT is given; return it first, exactly as given; if it alone states everything the routed assertions pin, return only it. Route IS: no template is given; your first requirement is the discussion-quote requirement above. Routes S-lit, S-keep and S-scope: no template; write one or more requirements, as few as the routed assertions need. Combined routes: first the S-a template requirements, exactly as given and in the given order, then the IS discussion-quote requirement (so it comes first only when there is no S-a route), then the other requirements.
+
+Mechanical check (G1 applies exactly these rules to your reply):
+TOKEN RULES (G1, deterministic; checked on every requirement, on the quoted text of a discussion-quote requirement, and on every interface field except Type). A text passes only if ALL hold:
+1. Identifiers (backticked spans and code-shaped prose words: dotted, snake_case, camelCase, call syntax, --flag) have provenance: they appear, spelled the same way, in the issue, or in a routed assertion's entry point or checked expression (its `api` entries with their keyword names and dotted suffixes, its `code` line, an identifier-shaped pinned `literal`). Names that the hidden test code defines itself (def/class names, function parameters, assignment targets, loop/with targets: fixtures, locals, test helpers) have no provenance from the tests unless the issue or an `api` entry also has them.
+2. Literals (quoted strings and numbers, also inside code spans) have provenance: they appear in the issue (a number as a standalone number token), or are a contract value that a routed assertion checks (a string inside a pinned `literal`, including a message, format or order string; a number equal to a number in a pinned `literal`). A value that occurs only as an argument or data in the test code has no provenance.
+3. A code span (backticked text) appears verbatim in the issue or in a routed assertion's `api` / `code` text, and its identifiers and literals pass 1 and 2 one by one (so `seed=123` fails when 123 is a test input).
+4. No identifier has a private segment (a segment that starts with "_" and is not a dunder: `__all__` and `__init__` are public) or an internal segment (core, _libs, internals), even if the issue or the tests have it.
+5. No path-like token (a file name with a source or config extension, an a/b/c path, a URL, a "Path:" line), even if the issue has it.
+6. No instruction phrasing: no sentence, list item, or text after a colon or semicolon that starts with a code-change verb (add, modify, update, replace, change, implement, fix, remove, rename, use, call, create, define, ensure, make sure, ...); no code-change verb after a modal or a person (should, must, need(s) to, has/have to, will, can, could, would, let's, we, you, I: "should add", "can change", "we remove"); no "should/must/needs to be added/changed/... to/in/from ..."; no "replace ... with `...`". A verb in a declarative description of the result is allowed ("the value no longer changes", "`X` returns `Y`").
+7. No test words: test, tests, tested, testing, pytest, unittest, assert*, fixture(s), parametrize, xfail, doctest, conftest, test_x, TestX, F2P, P2P, FAIL_TO_PASS, PASS_TO_PASS.
+
+Reply with JSON only: {"requirements": ["<S-a: the template requirement; IS: the discussion-quote requirement>", "..."], "interfaces": [{"name": "...", "type": "...", "input": "...", "output": "...", "description": "..."}], "why": "one sentence: which routed assertion each requirement or interface entry covers"}

@@ -1,0 +1,34 @@
+You review one candidate patch for a coding task taken from a GitHub issue.
+
+SOLVER-VISIBLE CONTEXT V (apply exactly). The solver (the engineer who resolves the task) sees (1) the task statement: the issue title and body exactly as given in this message, followed by the specification appended to it when the task has one (a "Requirements:" / "New interfaces introduced:" block; the issue text itself is never edited), (2) the full repository at the base commit (neither the fix nor the test patch applied), and (3) the documentation of the pinned dependencies. The solver does NOT see the issue discussion, the pull request, the hidden tests (the test patch), the gold patch (the reference solution), or the content behind links, images and attachments, and it has no network. A passage of the issue discussion reaches the solver only if the specification quotes it.
+
+A solver wrote the CANDIDATE PATCH. You get the issue, the specification appended to it when the task has one (<specification>), a CODE-EVIDENCE PACK (mechanically extracted excerpts of the base repository: where relevant identifiers occur, base bodies of the functions involved, their callers, raise / warn sites, the relevant existing tests, installed versions) and the candidate patch. You do not get the reference solution, and you do not get the hidden tests. Below, "the issue" means the task statement: the issue and, when present, its specification.
+
+Question: would a competent maintainer of this repository, reading only the issue and the code, accept the candidate as a correct resolution of the issue?
+- Correct means: it fully handles exactly the cases the issue describes (its examples and stated expectations), not only the reported example; cases the issue does not describe are not required. It does not break existing behaviour: a change of behaviour that worked at the base commit is a defect (class "regression") unless (a) or (b) of the REGRESSION-GUARD RULE below holds for it. Style, extra files (scratch scripts, new tests), comments, or a different but reasonable design do not make a patch incorrect.
+- Judge details that the issue does not fix (names, messages, values) on their merits: a different but reasonable choice is fine; a choice that is wrong for users (misleading or wrong text, wrong advice, wrong values) is a defect.
+
+REGRESSION-GUARD RULE (one rule for FAIL_TO_PASS checks and PASS_TO_PASS tests)
+A regression guard is a check that already passes on the original (base) code: it holds behaviour the base already has. A patch that changes that behaviour fails the guard. The failure counts against the test, not against the patch, only if
+(a) the task statement as shown to the solver (V) explicitly asks for the change the check forbids (quote its words), or
+(b) the check pins the defect the task statement reports, in a sibling code path or input: the same defect, not merely related behaviour, which a careful fix of the reported defect would naturally also fix (name the sibling path and quote the words that report the defect).
+Otherwise the guard protects behaviour that a correct fix must keep, even if the patch's change looks like an improvement, and the failure counts against the patch. Support that exists only in the issue discussion satisfies neither (a) nor (b). A failure that does not depend on the patch (the same test also fails without the patch or with the gold, or the failure comes from the environment: network, randomness, timing, test order, warning-registry state, resource limits, a missing optional dependency) is not a regression-guard failure: it counts neither against the test nor against the patch.
+
+For every defect you report give:
+- "class": one of
+  "issue_requirement" - the patch does not fully handle a case the issue describes (some example or stated expectation behaves wrongly);
+  "regression" - behaviour that worked at the base commit now breaks, and neither (a) nor (b) of the rule holds for it;
+  "other".
+- "description": one or two concrete sentences.
+- "counterexample": a self-contained Python 3 script that, run from the repository root with the patch applied, prints an observable result exposing the defect (print values; let exceptions propagate). No network, no test runner, no randomness or timestamps in what it prints, under one minute. Use null only if the defect cannot be shown by running code.
+- "expected": what a correct implementation would print, or "raises <ExceptionType>".
+Report only defects you are confident of after reading the patch and the pack; do not speculate about untested hypotheticals. If the patch is correct, return an empty defect list.
+
+Verdict, exactly one of:
+- correct: the candidate is a correct resolution of the issue; the defect list is empty.
+- incorrect: the candidate has at least one defect you report.
+- uncertain: not enough context to decide. Choose it when what you were given does not let you decide whether the candidate is correct; the defect list is empty, and the summary names what is missing.
+
+Reply with JSON only:
+{"verdict": "correct" | "incorrect" | "uncertain", "defects": [{"class": "...", "description": "...", "counterexample": "..." | null, "expected": "..."}], "summary": "two sentences"}
+"verdict" is "incorrect" iff the defect list is non-empty.

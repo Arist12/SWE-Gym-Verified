@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# tbx '<bash command>' : run one command in a fresh, network-less container of this task's environment image
+# (repo at /testbed at the base commit, the task's Python environment). Mounts: /in read-only (the stage's task
+# inputs), /out read-write (the caller's own persistent scratch; patches live at /out/witness.diff or
+# /out/alternative.diff). Each call is limited to $TBX_TIMEOUT s (900). Every call is appended to $TBX_LOG (jsonl).
+# Container contract: docker run --rm --init --network none --cpus 2 --memory 8g --pids-limit 1024, /in ro, /out rw,
+# -w /testbed; a flock slot pool bounds the number of concurrent containers.
+set -u -o pipefail
+if [ $# -ne 1 ]; then echo "usage: tbx '<bash command>'   (one quoted argument; runs in /testbed)" >&2; exit 2; fi
+img="${TBX_IMAGE:?TBX_IMAGE not set}"
+in_dir="${TBX_IN:?TBX_IN not set}"
+out_dir="${TBX_OUT:?TBX_OUT not set}"
+slots="${TBX_SLOTS_DIR:?TBX_SLOTS_DIR not set}"
+nslots="${TBX_NSLOTS:-8}"
+cpu0="${TBX_CPU_BASE:-}"
+limit="${TBX_TIMEOUT:-900}"
+name="${TBX_PREFIX:-tbx-}tbx-${TBX_TAG:-x}-$$-$RANDOM"
+labels=()
+for kv in ${TBX_LABELS:-}; do labels+=(--label "$kv"); done
+mnt=()
+if [ -n "${TBX_MOUNTS:-}" ]; then IFS=';' read -ra pairs <<< "$TBX_MOUNTS"; for pr in "${pairs[@]}"; do mnt+=(-v "${pr%%|*}:${pr##*|}:ro"); done; fi
+t0=$(date +%s.%N)
+mkdir -p "$out_dir" "$slots"
+got=""
+for _ in $(seq 1 3600); do
+  for i in $(seq 0 $((nslots - 1))); do
+    exec 9>"$slots/$i"
+    if flock -n 9; then got=$i; break 2; fi
+    exec 9>&-
+  done
+  sleep 1
+done
+[ -n "$got" ] || { echo "[tbx] no container slot free for 3600 s" >&2; exit 76; }
+cpus=()
+if [ -n "$cpu0" ]; then cpus=(--cpuset-cpus "$((cpu0 + 2 * got))-$((cpu0 + 1 + 2 * got))"); fi
+uid=$(id -u); gid=$(id -g)
+timeout -k 10 "$limit" docker run --rm --init --name "$name" --network none "${cpus[@]}" --cpus 2 --memory 8g \
+  --pids-limit 1024 "${labels[@]}" -e TBX_CMD="$1" -e PIP_NO_INDEX=1 -e PIP_DISABLE_PIP_VERSION_CHECK=1 \
+  -v "$in_dir":/in:ro -v "$out_dir":/out "${mnt[@]}" -w /testbed --entrypoint bash "$img" \
+  -c 'bash -lc "$TBX_CMD"; rc=$?; chown -R '"$uid:$gid"' /out 2>/dev/null; exit $rc'
+rc=$?
+if [ $rc -eq 124 ] || [ $rc -eq 137 ]; then docker rm -f "$name" >/dev/null 2>&1; echo "[tbx] command timed out after $limit s" >&2; fi
+if [ -n "${TBX_LOG:-}" ]; then
+  TBX_RC=$rc TBX_T0=$t0 TBX_ARG="$1" python3 -c '
+import json, os, time
+print(json.dumps({"t": round(float(os.environ["TBX_T0"]), 1), "s": round(time.time() - float(os.environ["TBX_T0"]), 1),
+                  "rc": int(os.environ["TBX_RC"]), "cmd": os.environ["TBX_ARG"]}))
+' >> "$TBX_LOG" 2>/dev/null
+fi
+exit $rc
